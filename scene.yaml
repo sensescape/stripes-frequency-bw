@@ -1,0 +1,1649 @@
+# Author: Geraldine Sarmiento
+
+# Tangram Blocks
+# https://tangrams.github.io/blocks/
+# Patricio Gonzalez Vivo
+#
+
+cameras:
+    camera1:
+        type: perspective
+
+global:
+    # default order for basemap features
+    feature_order: function() { return feature.sort_rank; }
+    feature_order_down_1: function() { return feature.sort_rank - 1; }
+    building_extrude_height: |
+        function () { return feature.height > 16 || $zoom >= 16; }
+
+    # Sign up for a Mapzen API key to enjoy higher rate limits
+    # https://mapzen.com/documentation/overview/#developer-accounts-and-api-keys
+    sdk_api_key: '3eqm2_bfTNGZ85ar20fVyA'     # set this value to your Mapzen API key
+
+    text_font_family: 'Fjalla One'
+
+    building_extrude_height: |                  # building extrude height logic
+        function() { return feature.height || 70; }
+
+    black_color:                  [1.000,1.000,1.000]
+    dark_color:                   [1.000,1.000,1.000]
+    mid_color:                    [0.995,0.995,0.995]
+    midlight_color:               [0.990,0.990,0.990]
+    extralight_color:             [0.985,0.985,0.985]
+    light_color:                  [0.980,0.980,0.980]
+    lighter_color:                [0.975,0.975,0.975]
+    lightest_color:               [0.970,0.970,0.970]
+    ultralight_color:             [0.965,0.965,0.965]
+    offwhite_color:               [0.960,0.960,0.960]
+    white_color:                  [0.955,0.955,0.955]
+
+    roads_text_fill:              [0.250,0.250,0.250]
+    roads_text_stroke:            [0.970,0.970,0.970]
+
+    #ux/ui
+    ux_language: false             # l10n language code, trusting OSM in v0.10 tiles, fixed in v1.0 tiles
+    ux_language_fallback: false    # l10n language code, trusting OSM in v0.10 tiles, fixed in v1.0 tiles
+    ux_language_text_source: |
+        function() {
+            // if a ux_langauge has been defined use that, else if there is feature name in the fallback_ux_language then use that, else use the feature's default name in the local language
+            return (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature.name;
+        }
+    ux_language_text_source_left: |
+        function() {
+            // if a ux_langauge has been defined use that, else if there is feature name in the fallback_ux_language then use that, else use the feature's default name in the local language
+            return (global.ux_language && feature['name:left:'+global.ux_language]) || (global.ux_language_fallback && feature['name:left:'+global.ux_language_fallback]) || feature['name:left'];
+        }
+    ux_language_text_source_right: |
+        function() {
+            // if a ux_langauge has been defined use that, else if there is feature name in the fallback_ux_language then use that, else use the feature's default name in the local language
+            return (global.ux_language && feature['name:right:'+global.ux_language]) || (global.ux_language_fallback && feature['name:right:'+global.ux_language_fallback]) || feature['name:right'];
+        }
+    ux_language_text_source_boundary_lines_left_right:
+        left: global.ux_language_text_source_left
+        right: global.ux_language_text_source_right
+    ux_language_text_source_boundary_lines: |
+        function() {
+           var right = (global.ux_language && feature['name:right:'+global.ux_language]) || (global.ux_language_fallback && feature['name:right:'+global.ux_language_fallback]) || feature['name:right'];
+           var left = (global.ux_language && feature['name:left:'+global.ux_language]) || (global.ux_language_fallback && feature['name:left:'+global.ux_language_fallback]) || feature['name:left'];
+           if( right && left ) {
+               //if( right.includes(' ') || left.includes(' ') ) {
+                   return left + " - " + right;
+               //} else {
+               //    return right + '\n' + left;
+               //}
+           } else {
+               return (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature.name;
+           }
+        }
+    ux_language_text_source_short: |
+        function() {
+            return (global.ux_language && feature['name:short:'+global.ux_language]) || (global.ux_language_fallback && feature['name:short:'+global.ux_language_fallback]) || feature['name:short'];
+        }
+    ux_language_text_source_short_proxy_name: |
+        function() {
+            var name  = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'] || '';
+            var short = (global.ux_language && feature['name:short:'+global.ux_language]) || (global.ux_language_fallback && feature['name:short:'+global.ux_language_fallback]) || feature['name:short'];
+            return short ? name : '';
+        }
+    ux_language_text_source_abbreviation: |
+        function() {
+            var name  = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'] || '';
+            var abbrev = (global.ux_language && feature['name:abbreviation:'+global.ux_language]) || (global.ux_language_fallback && feature['name:abbreviation:'+global.ux_language_fallback]) || feature['name:abbreviation'];
+            return abbrev || name;
+        }
+    ux_language_text_source_iata: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'];
+            if(feature.iata) {
+                if (name) {
+                    return name + ' (' + feature.iata + ')';
+                }
+                else {
+                    return feature.iata;
+                }
+            } else {
+                return name;
+            }
+        }
+    ux_language_text_source_ocean: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'] || '';
+            name = name.split(' ').join('\n');
+            return name.split('').join('  ');
+        }
+    ux_language_text_source_sea: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'] || '';
+            name = name.split(' ').join('\n');
+            return name.split('').join(' ');
+        }
+    ux_language_text_source_continent_stacked_only: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'] || '';
+            return name.split(' ').join('\n');
+        }
+    ux_language_text_source_continent: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'] || '';
+            name = name.split(' ').join('\n');
+            return name.split('').join(' ');
+        }
+    ux_language_text_source_road_ref_and_name: |
+        function() {
+            // if a ux_langauge has been defined use that, else if there is feature name in the fallback_ux_language then use that, else use the feature's default name in the local language
+            return (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature.name;
+
+            /*
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'];
+            if(feature.ref && name) {
+                return (feature.ref + ' ' + name);
+            } else {
+                return name;
+            }
+            */
+        }
+    ux_language_text_source_road_ref_and_name_short: |
+        function() {
+            // if a ux_langauge has been defined use that, else if there is feature name in the fallback_ux_language then use that, else use the feature's default name in the local language
+            return (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature.name;
+
+            /*
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'];
+            if (feature.ref && (feature.ref.length < 6) && name) {
+                return feature.ref + ' ' + name;
+            } else {
+                return name;
+            }
+            */
+        }
+    ux_language_text_source_piste_advanced: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'];
+            return name ? ('◆ ' + name) : '◆';
+        }
+    ux_language_text_source_piste_expert: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'];
+            return name ? ('◆◆ ' + name) : '◆◆';
+        }
+    ux_language_text_source_building_and_address: |
+        function() {
+            var name = (global.ux_language && feature['name:'+global.ux_language]) || (global.ux_language_fallback && feature['name:'+global.ux_language_fallback]) || feature['name'];
+            if (name && feature.addr_housenumber) {
+                return name + '\n' + feature.addr_housenumber;
+            } else {
+                return name;
+            }
+        }
+
+# Fonts
+fonts:
+    Orbitron:
+        - weight: normal # Regular
+          # url: https://fonts.gstatic.com/s/orbitron/v7/94ug0rEgQO_WuI_xKJMFc3YhjbSpvc47ee6xR_80Hnw.woff
+          url: fonts/94ug0rEgQO_WuI_xKJMFc3YhjbSpvc47ee6xR_80Hnw.woff
+
+    Cairo:
+        - weight: normal # Regular
+          # url: https://fonts.gstatic.com/s/cairo/v1/ZA_4ooaF_Dfdn26t_IoQOaCWcynf_cDxXwCLxiixG1c.woff
+          url: fonts/ZA_4ooaF_Dfdn26t_IoQOaCWcynf_cDxXwCLxiixG1c.woff
+
+    Aldrich:
+        - weight: normal # Regular
+          # url: https://fonts.gstatic.com/s/aldrich/v6/VWXaIPGrUapL_Y2vGs0lKALUuEpTyoUstqEm5AMlJo4.woff
+          url: fonts/VWXaIPGrUapL_Y2vGs0lKALUuEpTyoUstqEm5AMlJo4.woff
+
+    Open Sans:
+        - weight: 300 # Light
+          url: fonts/OpenSans-Light.woff
+        - weight: normal # Regular
+          url: fonts/OpenSans-Regular.woff
+        - weight: normal # Regular
+          style: italic
+          url: fonts/OpenSans-Italic.woff
+        - weight: 600 # Semi Bold
+          url: fonts/OpenSans-Semibold.woff
+        - weight: 600 # Semi Bold
+          style: italic
+          url: fonts/OpenSans-SemiboldItalic.woff
+        - weight: bold
+          url: fonts/OpenSans-Bold.woff
+
+    Anton:
+        - weight: 400 # Regular
+          style: normal
+          url: fonts/anton-v11-latin-regular.woff
+
+    Fjalla One:
+        - weight: 400
+          style: normal
+          url: fonts/fjalla-one-v7-latin-regular.woff
+
+
+
+scene:
+    background:
+        color: [0.000,0.000,0.000]
+
+sources:
+    mapzen:
+        type: MVT
+        url: https://tile.nextzen.org/tilezen/vector/v1/512/all/{z}/{x}/{y}.mvt
+        url_params:
+            api_key: global.sdk_api_key
+        rasters: [normals-elevation]
+        tile_size: 512
+        max_zoom: 16
+
+
+layers:
+    earth:
+        data: { source: mapzen, layer: earth }
+        draw:
+            polygons:
+                style: stripes-earth
+                order: global.feature_order
+                color: [0.999,1.000,0.950]
+                # color: [1.000,0.916,0.370]
+
+    water:
+        data: { source: mapzen, layer: water }
+        draw:
+            polygons:
+                style: stripes-water
+                # color: [0.151,0.369,0.840]
+                color: [0.000,0.519,0.890]
+                order: global.feature_order
+
+        lakes:
+            filter:
+                all:
+                    - kind: [ocean, lake, water, riverbank, reservoir, swimming_pool]
+            draw:
+                polygons:
+                    # color: [0.151,0.369,0.840]
+                    color: [0.000,0.519,0.890]
+
+        other-water-areas:
+            filter: { not: { kind: [ocean, lake, water, reservoir] }, $zoom: { min: 11 }, area: { min: 100 } }
+            draw:
+                polygons:
+                    visible: true
+                    color: [0.000,0.519,0.890]
+
+    landuse:
+        data: { source: mapzen }
+        enabled: true
+        draw:
+            polygons:
+                order: global.feature_order
+                visible: false
+            lines:
+                order: global.feature_order
+                visible: false
+
+        green-areas:
+            filter:
+                all:
+                    - kind: [national_park, battlefield, protected_area, park, protected_area, nature_reserve, forest, natural_forest, wood, natural_wood, natural_park]
+            draw:
+                polygons:
+                    style: stripes-green
+                    # style: polygons
+                    color: [0.000,0.000,0.000]
+                    visible: true
+
+        universities-schools:
+            filter:
+                kind: [university, college, school]
+            draw:
+                polygons:
+                    style: stripes-university
+                    color: [0.000,0.000,0.000]
+                    visible: true
+
+        gardens-playgrounds:
+            filter:
+                kind: [garden, playground]
+            draw:
+                polygons:
+                    style: stripes-gardens
+                    color: [0.000,0.899,0.930]
+                    visible: true
+
+        pitch:
+            filter:
+                kind: pitch
+            draw:
+                polygons:
+                    style: stripes-pitch
+                    color: [0.600,1.000,0.110]
+                    visible: true
+
+        golf_course:
+            filter:
+                kind: golf_course
+            draw:
+                polygons:
+                    style: stripes-golf
+                    color: [0.000,0.000,0.000]
+                    visible: true
+
+        pedestrian:
+            filter:
+                kind: [pedestrian,common,footway]
+            draw:
+                polygons:
+                    style: stripes-pedestrian
+                    color: [0.750,0.750,0.750]
+                    visible: true
+
+        beach:
+            filter:
+                kind: beach
+            draw:
+                polygons:
+                    style: stripes-beach
+                    color: [0.000,0.000,0.000]
+                    visible: true
+
+        # cemetery:
+        #     filter:
+        #         kind: cemetery
+        #     draw:
+        #         polygons:
+        #             style: stripes-cemetery
+        #             color: [0.000,0.000,0.000]
+        #             visible: true
+
+        hospital:
+            filter:
+                kind: hospital
+            draw:
+                polygons:
+                    style: stripes-hospital
+                    color: [0.000,0.000,0.000]
+                    # color: [1.000,0.820,0.820]
+                    visible: true
+
+
+    buildings:
+        data: { source: mapzen, layer: buildings }
+        enabled: true
+        filter:
+            not: { location: underground }
+        draw:
+            polygons:
+                visible: false
+                order: 529
+                color: [0.000,0.000,0.000]
+            lines:
+                visible: false
+                order: 529
+
+        footprints:
+            draw:
+                polygons:
+                    style: stripes-buildings-overlap-horizontal
+                    visible: true
+
+            # extrude:
+            #     filter:
+            #         all:
+            #             - $zoom: { min: 15 }
+            #             - height: { min: 200 }
+            #             - not:
+            #                 - layer: [-1, -2, -3, -4, -5]
+            #     draw:
+            #         polygons:
+            #             style: stripes-gradient
+            #             visible: true
+            #             color: [0.500,0.500,0.500]
+            #             extrude: global.building_extrude_height
+
+        in_hospital:
+            filter: { landuse_kind: hospital }
+            draw:
+                polygons:
+                    style: stripes-hospital-buildings
+
+        in_retail:
+            filter: { landuse_kind: retail }
+            draw:
+                polygons:
+                    visible: true
+                    style: stripes-retail-buildings
+
+        in_university:
+            filter: { landuse_kind: [university,school] }
+            draw:
+                polygons:
+                    style: stripes-university-buildings
+
+    places:
+        data: { source: mapzen, layer: places }
+        enabled: true
+        filter:
+            name: true
+        draw:
+            text-blend-order:
+                visible: false    # labels are enabled by each layer below
+                buffer: 3px
+                font:
+                    family: global.text_font_family
+                    fill: [0.000,0.000,0.000]
+                    size: 12px
+
+        populated-places:
+            filter:
+                kind: locality
+            draw:
+                text-blend-order:
+                    visible: true
+                    buffer: 42px
+                    font:
+                        size: [[5,9px],[8,10px],[12,13px]]
+                        stroke: { color: [0.998,1.000,0.850], width: 3px }
+                        transform: uppercase
+
+            # _text_early:
+            #     filter: { $zoom: { max: 11 } }
+            #     draw:
+            #         text-blend-order:
+            #             visible: false
+
+
+            # HACK
+            # NOTE: These should use icon: buffer instead of going visible: false, but there are problems using icon here :(
+            # This fixes Paris area, but causes problems for small places in the USA eg Table Bluff near Eureka, California.
+            funky-village:
+                filter: { $zoom: [11], population: { max: 1000 }, kind_detail: [village] }
+                draw:
+                    text-blend-order:
+                        visible: false
+            funky-isolated_dwelling:
+                filter: { $zoom: [13], kind_detail: [isolated_dwelling] }
+                draw:
+                    text-blend-order:
+                        visible: false
+            hamlet:
+                filter: { $zoom: [13], kind_detail: hamlet }
+                draw:
+                    text-blend-order:
+                        visible: false
+            # END HACK
+
+            # someone in London and Salt Lake City thought neighbourhoods should be tagged place: locality
+            # They were wrong
+            funky-fake-neighbourhoods:
+                filter: { $zoom: { min: 13 }, kind_detail: [locality] }
+                draw:
+                    text-blend-order:
+                        visible: false
+
+
+            population-10m-up:
+                filter:
+                    population: { min: 10000000 }
+                draw:
+                    text-blend-order:
+                        priority: 6
+                        font:
+                            size: [[2,11px],[6,15px],[8,18px],[10,20px],[12,20px],[13,0px]]
+            population-5m-10m:
+                filter:
+                    population: { min: 5000000, max: 10000000 }
+                draw:
+                    text-blend-order:
+                        priority: 7
+                        font:
+                            size: [[4,10px],[6,14px],[8,18px],[10,20px],[12,20px],[13,0px]]
+            population-1m-5m:
+                filter:
+                    population: { min: 1000000, max: 5000000 }
+                draw:
+                    text-blend-order:
+                        priority: 9
+                        font:
+                            size: [[4,10px],[6,14px],[8,15px],[12,18px],[13,0px]]
+            population-500k-1m:
+                filter:
+                    population: { min: 500000, max: 1000000 }
+                draw:
+                    text-blend-order:
+                        priority: 11
+                        font:
+                            size: [[5,10px],[8,12px],[10,14px],[12,16px],[13,0px]]
+            population-200k-500k:
+                filter:
+                    population: { min: 200000, max: 500000 }
+                draw:
+                    text-blend-order:
+                        priority: 13
+                        font:
+                            size: [[6,10px],[8,14px],[10,15px],[12,16px],[13,0px]]
+            population-100k-200k:
+                filter:
+                    population: { min: 100000, max: 200000 }
+                draw:
+                    text-blend-order:
+                        priority: 15
+                        font:
+                            size: [[6,10px],[8,12px],[14,14px],[15,0px]]
+            population-50k-100k:
+                filter:
+                    population: { min: 50000, max: 100000 }
+                draw:
+                    text-blend-order:
+                        priority: 17
+                        font:
+                            size: [[6,10px],[8,12px],[14,14px],[15,0px]]
+            population-20k-50k:
+                filter:
+                    population: { min: 20000, max: 50000 }
+                draw:
+                    text-blend-order:
+                        priority: 19
+                        font:
+                            size: [[9,10px],[14,12px],[15,0px]]
+            population-10k-20k:
+                filter:
+                    population: { min: 10000, max: 20000 }
+                draw:
+                    text-blend-order:
+                        priority: 21
+                        font:
+                            size: [[9, 10px],[14, 12px],[15, 0px]]
+            population-5k-10k:
+                filter:
+                    population: { min: 5000, max: 10000 }
+                draw:
+                    text-blend-order:
+                        priority: 23
+                        font:
+                            size: [[9,10px], [14,12px], [15,0px]]
+            population-2k-5k:
+                filter:
+                    population: { min: 2000, max: 5000 }
+                draw:
+                    text-blend-order:
+                        priority: 25
+                        font:
+                            size: [[9,10px], [14,12px], [15,0px]]
+            population-1k-2k:
+                filter:
+                    population: { min: 1000, max: 2000 }
+                draw:
+                    text-blend-order:
+                        priority: 27
+                        font:
+                            size: [[9, 10px], [14, 12px], [15, 0px]]
+            population-200-1k:
+                filter:
+                    population: { min: 200, max: 1000 }
+                draw:
+                    text-blend-order:
+                        priority: 28
+                        font:
+                            size: [[9, 10px], [14, 11px], [15, 0px]]
+
+styles:
+    text-blend-order:
+        base: text
+        blend_order: 10
+
+    stripes-water:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .75
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,vec3(0.000,0.000,0.000),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE));
+
+    stripes-earth:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .995
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,vec3(0.000),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE));
+
+    stripes-buildings-overlap-horizontal:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .5
+                STRIPES_WIDTH2: .995
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 3.14159265
+            blocks:
+                # color: |
+                #     vec2 st = getScreenNonStretchCoords();
+                #     color.rgb = mix(color.rgb,mix(vec3(0.000,1.000,0.000),vec3(0.000,0.000,1.000),stripes(st*50.,
+                #                         STRIPES_WIDTH2,
+                #                         STRIPES_ANGLE)),stripes(st*50.,
+                #                         STRIPES_WIDTH,
+                #                         STRIPES_ANGLE2));
+
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(mix(vec3(1.000,0.783,0.000),vec3(0.000,0.000,0.000),stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-hospital-buildings:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .5
+                STRIPES_WIDTH2: .995
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 3.14159265
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(mix(vec3(1.000,0.000,0.383),vec3(0.000,0.000,0.000),stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-retail-buildings:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .85
+                STRIPES_WIDTH2: .995
+                STRIPES_WIDTH3: .5
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 3.14159265
+                STRIPES_ANGLE3: 3.14159265
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(mix(mix(vec3(1.000,0.783,0.000),vec3(0.000),stripes(st*25.,STRIPES_WIDTH2,STRIPES_ANGLE)),vec3(1.000,0.260,0.938),stripes(st*25.,STRIPES_WIDTH3,STRIPES_ANGLE2)),color.rgb,stripes(st*25.,STRIPES_WIDTH,STRIPES_ANGLE3));
+                    
+
+# color.rgb = mix(mix(vec3(1.000,0.000,0.383),vec3(0.000,0.000,0.000),stripes(st*25.,STRIPES_WIDTH2,STRIPES_ANGLE)),color.rgb,stripes(st*25.,STRIPES_WIDTH,STRIPES_ANGLE2));
+
+# color.rgb = mix(color.rgb,vec3(0.000),stripes(st*25.,STRIPES_WIDTH,STRIPES_ANGLE));
+
+# color.rgb = mix(mix(vec3(1.000,0.000,0.383),vec3(0.000),stripes(st*25.,STRIPES_WIDTH2,STRIPES_ANGLE)),color.rgb,stripes(st*25.,STRIPES_WIDTH,STRIPES_ANGLE2));
+
+# color.rgb = mix(mix(mix(vec3(1.000,0.000,0.383),vec3(0.000),stripes(st*25.,STRIPES_WIDTH2,STRIPES_ANGLE)),vec3(0.000),stripes(st*25.,STRIPES_WIDTH3,STRIPES_ANGLE2)),color.rgb,stripes(st*25.,STRIPES_WIDTH,STRIPES_ANGLE3));
+
+    stripes-university-buildings:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .5
+                STRIPES_WIDTH2: .95
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 3.14159265
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(mix(vec3(1.000,0.317,0.000),vec3(0.000,0.000,0.000),stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+
+    stripes-green:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .45
+                STRIPES_WIDTH2: .95
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(vec3(0.890,1.000,0.945),mix(vec3(0.000,0.820,0.656).rgb,color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-university:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .45
+                STRIPES_WIDTH2: .95
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(vec3(1.000,0.967,0.750),mix(vec3(1.000,0.766,0.330).rgb,color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-gardens:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .5
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,vec3(0.000),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE));
+
+    stripes-pitch:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .5
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,vec3(0.000),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE));
+
+    stripes-beach:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .45
+                STRIPES_WIDTH2: .995
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(vec3(0.980,0.980,0.980),mix(vec3(1.000,0.925,0.590).rgb,color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-hospital:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .45
+                STRIPES_WIDTH2: .95
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(vec3(0.999,1.000,0.950),mix(vec3(1.000,0.910,0.910).rgb,color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-golf:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .45
+                STRIPES_WIDTH2: .95
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(vec3(0.931,1.000,0.840),mix(vec3(0.000,0.910,0.258).rgb,color.rgb,stripes(st*25.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-pedestrian:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .5
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,vec3(0.000),stripes(st*25.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE));
+
+    stripes-gardens-overlap-diagonal:
+        base: polygons
+        mix: [functions-aastep, pallete, patterns-stripes, space-screen]
+        blend: inlay
+        shaders:
+            defines:
+                STRIPES_WIDTH: .42
+                STRIPES_WIDTH2: .42
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 0.7853981634
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                # color: |
+                #     vec2 st = getScreenNonStretchCoords();
+                #     color = mix(color,mix(color,vec4(0.950,0.950,0.950,0.5),stripes(st*50.,
+                #                         STRIPES_WIDTH2,
+                #                         STRIPES_ANGLE)),stripes(st*50.,
+                #                         STRIPES_WIDTH,
+                #                         STRIPES_ANGLE2));
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,mix(vec3(0.000,1.000,0.500),vec3(1.000,1.000,1.000),stripes(st*100.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*50.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-golf-overlap-vertical:
+        base: polygons
+        mix: [functions-aastep, pallete, patterns-stripes, space-screen]
+        blend: inlay
+        shaders:
+            defines:
+                STRIPES_WIDTH: .42
+                STRIPES_WIDTH2: .82
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 1.0
+                STRIPES_ANGLE: 1.570796325
+                STRIPES_ANGLE2: 1.570796325
+            blocks:
+                # color: |
+                #     vec2 st = getScreenNonStretchCoords();
+                #     color = mix(color,mix(color,vec4(0.950,0.950,0.950,0.5),stripes(st*50.,
+                #                         STRIPES_WIDTH2,
+                #                         STRIPES_ANGLE)),stripes(st*50.,
+                #                         STRIPES_WIDTH,
+                #                         STRIPES_ANGLE2));
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,mix(vec3(0.500,0.000,1.000),vec3(1.000,1.000,1.000),stripes(st*20.,
+                                        STRIPES_WIDTH2,
+                                        STRIPES_ANGLE)),stripes(st*50.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE2));
+
+    stripes-cemetery:
+        base: polygons
+        mix: [functions-aastep, patterns-stripes, space-screen]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .4
+                STRIPES_ALPHA: 1.0
+                STRIPES_SCALE: 0.7
+                STRIPES_ANGLE: 3.14159265
+            blocks:
+                color: |
+                    vec2 st = getScreenNonStretchCoords();
+                    color.rgb = mix(color.rgb,vec3(1.000),stripes(st*65.,
+                                        STRIPES_WIDTH,
+                                        STRIPES_ANGLE));
+
+    stripes-noise:
+        base: polygons
+        mix: [space-tile, generative-noise, patterns-stripes, pattern-noise]
+        shaders:
+            defines:
+                STRIPES_WIDTH: .7
+                STRIPES_ALPHA: 1.0
+                # STRIPES_SCALE: 9.0
+                STRIPES_SCALE: 3.5
+                STRIPES_ANGLE: 3.14159265
+            uniforms:
+                # u_noise_freq: 0.005
+                u_noise_freq: 0.002
+                # u_noise_scale: 0.05
+                u_noise_scale: 0.3
+                u_background_color: [0.000,0.000,0.000]
+            blocks:
+                color: |
+                    float a = stripes(patternNoiseCoords() * STRIPES_SCALE,
+                                    STRIPES_WIDTH,
+                                    STRIPES_ANGLE);
+                    color.rgb = mix(color.rgb, u_background_color, a);
+
+    stripes:
+        base: polygons
+        shaders:
+            blocks:
+                global: |
+
+                    // Stripes
+                    //=============================
+                    float stripes(vec2 st,float width){
+                        return step(width,1.0-abs(sin(st.y*3.14159265358)));
+                    }
+
+    stripes-gradient:
+        base: polygons
+        mix: stripes
+        texcoords: true
+        # blend: overlay
+        shaders:
+            blocks:
+                color: |
+                    vec2 st = v_texcoord.xy;
+                    color.rgb += vec3(min((v_world_position.z*.001 + 1.0),3.));
+                    color.rgb = mix(color.rgb,vec3(0.00,0.00,0.00),stripes(st*16.,st.y*0.7) );
+
+                    if ( dot(vec3(0.,0.,1.),normal) == 1.0 ) {
+                        // If it's a roof
+                        color.rgb = vec3(0.940);
+                    }
+
+    lines-stripes:
+        ui:
+            shaders:
+                defines:
+                    STRIPES_WIDTH:
+                        type: number
+                        label: Width
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    STRIPES_COLOR: 
+                        type: color
+                        label: Color
+                    STRIPES_BACKGROUND_COLOR: 
+                        type: color
+                        label: 'Background Color'
+        base: lines
+        texcoords: true
+        shaders:
+            defines:
+                STRIPES_WIDTH: .2
+                STRIPES_COLOR: vec3(0.000,0.000,0.000)
+                STRIPES_BACKGROUND_COLOR: color.rgb
+            blocks:
+                color: |
+                    color.rgb = mix(STRIPES_BACKGROUND_COLOR,
+                                    STRIPES_COLOR,
+                                    step(STRIPES_WIDTH, sin((fract(v_texcoord).x+fract(v_texcoord).y) * 3.283)));
+
+    lines-stripes-roads:
+        ui:
+            shaders:
+                defines:
+                    STRIPES_WIDTH:
+                        type: number
+                        label: Width
+                        range: 
+                            min: 0.
+                            max: 1.
+                            step: 0.01
+                    STRIPES_COLOR: 
+                        type: color
+                        label: Color
+                    STRIPES_BACKGROUND_COLOR: 
+                        type: color
+                        label: 'Background Color'
+        base: lines
+        texcoords: true
+        shaders:
+            defines:
+                STRIPES_WIDTH: 0.125
+                STRIPES_COLOR: vec3(0.000,0.000,0.000)
+                STRIPES_BACKGROUND_COLOR: color.rgb
+            blocks:
+                color: |
+                    color.rgb = mix(STRIPES_BACKGROUND_COLOR,
+                                    STRIPES_COLOR,
+                                    step(STRIPES_WIDTH, sin((fract(v_texcoord).x+fract(v_texcoord).y) * 6.283)));
+
+    space-screen:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Get the coordinates in screen space streaching the proportion ('vec2 getScreenCoords ()') or non-streatching the proportion ('getScreenNonStretchCoords ()')
+            examples:
+                press:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/press.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/press.png
+                    lines: 136-145
+                radar:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/radar.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/radar.png
+                    lines: 0-143
+        test:
+            screen:
+                blocks:
+                    color: |
+                        vec2 st = getScreenCoords();
+                        color.rg += fract(st*3.);
+            screen_nonstretch:
+                blocks:
+                    color: |
+                        vec2 st = getScreenNonStretchCoords();
+                        color.rg += fract(st*3.);
+        shaders:
+            blocks:
+                global: |
+                    #ifdef TANGRAM_FRAGMENT_SHADER
+                    vec2 getScreenCoords () {
+                        return gl_FragCoord.xy / u_resolution.xy;
+                    }
+
+                    vec2 getScreenNonStretchCoords () {
+                        vec2 st = getScreenCoords();
+                        if (u_resolution.y > u_resolution.x ) {
+                            st.y *= u_resolution.y/u_resolution.x;
+                            st.y -= (u_resolution.y*.5-u_resolution.x*.5)/u_resolution.x;
+                        } else {
+                            st.x *= u_resolution.x/u_resolution.y;
+                            st.x -= (u_resolution.x*.5-u_resolution.y*.5)/u_resolution.y;
+                        } 
+                        return st;
+                    }
+                    #endif
+
+    space-constant:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Get the constant coordinates **(warning: could glitch on zooms)**
+            examples:
+                grain-area:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/grain-area.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/grain-area.png
+                    lines: 26
+        test:
+            constant: 
+                blocks:
+                    color: |
+                        vec2 st = getConstantCoords();
+                        color.rg += fract(st*3.);
+
+        shaders:
+            blocks:
+                global: |
+                    vec2 getConstantCoords () {
+                        #ifdef TANGRAM_FRAGMENT_SHADER
+                        const float pixel_scale = 695.;
+                        float meter_pixels = u_meters_per_pixel / u_device_pixel_ratio;
+                        vec2 st = gl_FragCoord.xy/pixel_scale;
+                        const float dot_wrap = 1000.;
+                        st += mod(u_map_position.xy / meter_pixels, dot_wrap)/pixel_scale;
+                        return st;
+                        #else
+                        return vec2(0.0,0.0);
+                        #endif
+                    }
+
+    patterns-stripes:
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Collection of functions to draw stripes. To learn more about patterns check [this chapter from the Book of Shaders](https://thebookofshaders.com/09/)
+            examples:
+                grain-area:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/grain-area.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/grain-area.png
+                    lines: 26
+                press:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/press.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/press.png
+                    lines: 150
+                radar:
+                    url: https://tangrams.github.io/tangram-sandbox/styles/radar.yaml
+                    img: https://tangrams.github.io/tangram-sandbox/styles/radar.png
+        mix: [functions-aastep, geometry-matrices]
+        shaders:
+            defines:
+                PI: 3.14159265358979323846
+            blocks:
+                global: |
+                    // Return a distance function of stripes
+                    float stripesDF (vec2 st) {
+                        return abs(sin(st.y*PI));
+                    }
+
+                    // Adjustable width stripes
+                    float stripes (vec2 st, float width) {
+                        return aastep(width, stripesDF(st));
+                    }
+
+                    // Adjustable Angle
+                    float stripes (vec2 st, float width, float angle) {
+                        st = rotate2D(angle) * st;
+                        return stripes(st, width);
+                    }
+
+                    // Faster optimisation of diagonal stripes
+                    float diagonalStripes (vec2 st) {
+                        vec2 i_st = floor(st);
+                        vec2 f_st = fract(st);
+                        if (mod(i_st.y,2.) - mod(i_st.x,2.) == 0.) {
+                            return 1.0 - aastep(f_st.x,f_st.y);
+                        } else {
+                            return aastep(f_st.x,f_st.y);
+                        }
+                    }
+
+                    // Faster optimisation of diagonal stripes with controlable width
+                    float diagonalStripes (vec2 st, float width) {
+                        st.y -= st.x;
+                        return stripes(st, width);
+                    }
+
+    pattern-noise:
+        mix: [space-tile, generative-noise]
+        shaders:
+            uniforms:
+                u_noise_freq: 0.002
+                u_noise_scale: 0.03
+            blocks:
+                global: |
+                    vec2 patternNoiseCoords() {
+                        float zbase = u_tile_origin.z - 12.;
+                        vec2 st = fract(
+                            v_pos.xy +
+                            noise(worldPosition().xy * u_noise_freq * exp2(zbase)) * u_noise_scale
+                        );
+                        return st;
+                    }
+
+    geometry-matrices:
+        mix: [block]
+        doc:
+            author:
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Useful set of functions to construct scale, rotation and translation of 2, 3 or 4 dimensions. For more information about matrices read [this chapter from The Book of Shaders](http://thebookofshaders.com/08/)
+        shaders:
+            blocks:
+                global: |
+                    // Rotate in 2, 3 and 4 dimensions
+                    // ================================
+                    mat2 rotate2D (float angle) {
+                        return mat2(cos(angle),-sin(angle),
+                                    sin(angle),cos(angle));
+                    }
+                    #ifdef TANGRAM_FRAGMENT_SHADER
+                    vec2 rotate2D (vec2 st, float a) {
+                        return (rotate2D(a)*(st-.5))+.5;
+                    }
+                    #endif
+                    mat3 rotateX3D (float phi) {
+                        return mat3(
+                            vec3(1.,0.,0.),
+                            vec3(0.,cos(phi),-sin(phi)),
+                            vec3(0.,sin(phi),cos(phi)));
+                    }
+                    mat4 rotateX4D (float phi) {
+                        return mat4(
+                            vec4(1.,0.,0.,0),
+                            vec4(0.,cos(phi),-sin(phi),0.),
+                            vec4(0.,sin(phi),cos(phi),0.),
+                            vec4(0.,0.,0.,1.));
+                    }
+                    mat3 rotateY3D (float theta) {
+                        return mat3(
+                            vec3(cos(theta),0.,-sin(theta)),
+                            vec3(0.,1.,0.),
+                            vec3(sin(theta),0.,cos(theta)));
+                    }
+                    mat4 rotateY4D (float theta) {
+                        return mat4(
+                            vec4(cos(theta),0.,-sin(theta),0),
+                            vec4(0.,1.,0.,0.),
+                            vec4(sin(theta),0.,cos(theta),0.),
+                            vec4(0.,0.,0.,1.));
+                    }
+                    mat3 rotateZ3D (float psi) {
+                        return mat3(
+                            vec3(cos(psi),-sin(psi),0.),
+                            vec3(sin(psi),cos(psi),0.),
+                            vec3(0.,0.,1.));
+                    }
+                    mat4 rotateZ4D (float psi) {
+                        return mat4(
+                            vec4(cos(psi),-sin(psi),0.,0),
+                            vec4(sin(psi),cos(psi),0.,0.),
+                            vec4(0.,0.,1.,0.),
+                            vec4(0.,0.,0.,1.));
+                    }
+                    //
+                    // Scale 4 dimensions
+                    // ================================
+                    mat4 scale4D (float x, float y, float z) {
+                        return mat4(
+                            vec4(x,   0.0, 0.0, 0.0),
+                            vec4(0.0, y,   0.0, 0.0),
+                            vec4(0.0, 0.0, z,   0.0),
+                            vec4(0.0, 0.0, 0.0, 1.0)
+                        );
+                    }
+                    //
+                    // Translate in 4 dimensions
+                    mat4 translate4D (float x, float y, float z) {
+                        return mat4(
+                            vec4(1.0, 0.0, 0.0, 0.0),
+                            vec4(0.0, 1.0, 0.0, 0.0),
+                            vec4(0.0, 0.0, 1.0, 0.0),
+                            vec4(x,   y,   z,   1.0)
+                        );
+                    }
+
+    functions-aastep:
+        doc:
+            author:
+                name: Matt DesLauriers
+                twitter: mattdesl
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                AnitAliased ```step()``` function implemented by [Matt DesLauriers](https://twitter.com/mattdesl) in this module <https://github.com/stackgl/glsl-aastep>
+        shaders:
+            extensions: OES_standard_derivatives
+            blocks:
+                global: |
+                    // AntiAliased Step function
+                    //=============================
+                    float aastep(float threshold, float value) {
+                        #ifdef TANGRAM_FRAGMENT_SHADER
+                            #ifdef TANGRAM_EXTENSION_OES_standard_derivatives
+                                float afwidth = length(vec2(dFdx(value), dFdy(value))) * 0.70710678118654757;
+                                return smoothstep(threshold-afwidth, threshold+afwidth, value);
+                            #else
+                                return step(threshold, value);
+                            #endif
+                        #else
+                            return step(threshold, value);
+                        #endif
+                    }
+
+    generative-noise:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Set of Noise functions.
+                For more information on this theme read [this chapter of The Book of Shaders about Noise](http://thebookofshaders.com/11/).
+        test:
+            noise_float: { blocks: { color: "    color.rgb += noise(v_texcoord.x*2.);" } }
+            noise_vec2: { blocks: { color: "    color.rgb += noise(v_texcoord.xy*2.);" } }
+            noise_vec3: { blocks: { color: "    color.rgb += noise(vec3(v_texcoord.xy*2.,u_time));" } }
+            gnoise_vec2: { blocks: { color: "    color.rgb += gnoise(v_texcoord.xy*2.);" } }
+            gnoise_vec3: { blocks: { color: "    color.rgb += gnoise(vec3(v_texcoord.xy*2.,u_time));" } }
+            snoise_vec2: { blocks: { color: "    color.rgb += snoise(v_texcoord.xy*2.);" } }
+            snoise_vec3: { blocks: { color: "    color.rgb += snoise(vec3(v_texcoord.xy*2.,u_time));" } }
+            noise_float_t: { defines: { NOISE_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += noise(v_texcoord.x*2.);" } }
+            noise_vec2_t: { defines: { NOISE_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += noise(v_texcoord.xy*2.);" } }
+            noise_vec3_t: { defines: { NOISE_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += noise(vec3(v_texcoord.xy,u_time)*2.);" } }
+
+        mix: generative-random
+        shaders:
+            defines:
+                NOISE_TEXSAMPLE_SIZE: 256.0
+            blocks:
+                global: |
+                    // Value Noise 
+                    float noise (in float x) {
+                        #ifdef NOISE_TEXSAMPLE
+                        return texture2D(u_random, vec2(x*(1./NOISE_TEXSAMPLE_SIZE))).r;
+                        #else
+                        float i = floor(x);
+                        float f = fract(x);
+                        f = f * f * (3.0 - 2.0 * f);
+                        return mix(random(i), random(i + 1.0), f);
+                        #endif
+                    }
+
+                    // Value Noise
+                    float noise (vec2 p) {
+                        vec2 i = floor(p);
+                        vec2 f = fract(p);
+                        #ifdef NOISE_TEXSAMPLE
+                        vec2 uv = i.xy + f.xy*f.xy*(3.0-2.0*f.xy);
+                        return texture2D(u_random, fract((uv+118.4)/NOISE_TEXSAMPLE_SIZE) ).x;
+                        #else
+                        f = f * f * (3.0 - 2.0 * f);
+                        float a = random(i);
+                        float b = random(i + vec2(1.0, 0.0));
+                        float c = random(i + vec2(0.0, 1.0));
+                        float d = random(i + vec2(1.0, 1.0));
+                        return mix(a, b, f.x) + (c - a) * f.y * (1.0 - f.x) + (d - b) * f.x * f.y;
+                        #endif
+                    }
+
+                    // Value Noise
+                    float noise (vec3 p) {
+                        vec3 i = floor(p);
+                        vec3 f = fract(p);
+                        f = f*f*(3.0-2.0*f);
+                        #ifdef NOISE_TEXSAMPLE
+                        vec2 uv = (i.xy+vec2(37.0,17.0)*i.z) + f.xy;
+                        vec2 rg = texture2D(u_random, fract((uv+.5)/NOISE_TEXSAMPLE_SIZE), -100.0 ).yx;
+                        return mix( rg.x, rg.y, f.z );
+                        #else
+                        float n = i.x + i.y*57.0 + 113.0*i.z;
+                        return mix(mix(mix(random(n+0.0),random(n+1.0),f.x),mix(random(n+ 57.0),random(n+ 58.0),f.x),f.y),mix(mix(random(n+113.0),random(n+114.0),f.x),mix(random(n+170.0),random(n+171.0),f.x),f.y),f.z);
+                        /*
+                        const vec3 step = vec3(110.0, 241.0, 171.0);
+                        float n = dot(i, step);
+                        return mix( mix(mix(random(n + dot(step, vec3(0,0,0))),
+                                            random(n + dot(step, vec3(1,0,0))), f.x),
+                                        mix(random(n + dot(step, vec3(0,1,0))),
+                                            random(n + dot(step, vec3(1,1,0))), f.x),
+                                        f.y),
+                                    mix(mix(random(n + dot(step, vec3(0,0,1))),
+                                            random(n + dot(step, vec3(1,0,1))), f.x),
+                                        mix(random(n + dot(step, vec3(0,1,1))),
+                                            random(n + dot(step, vec3(1,1,1))), f.x),
+                                    f.y),
+                                f.z);
+                                */
+                        #endif
+                    }
+
+                    // Gradient Noise
+                    // From IQ (https://www.shadertoy.com/view/XdXGW8)
+                    float gnoise (in vec2 p) {
+                        vec2 i = floor( p );
+                        vec2 f = fract( p );
+                        
+                        vec2 u = f*f*(3.0-2.0*f);
+
+                        return mix( mix( dot( random2( i + vec2(0.0,0.0) ), f - vec2(0.0,0.0) ), 
+                                         dot( random2( i + vec2(1.0,0.0) ), f - vec2(1.0,0.0) ), u.x),
+                                    mix( dot( random2( i + vec2(0.0,1.0) ), f - vec2(0.0,1.0) ), 
+                                         dot( random2( i + vec2(1.0,1.0) ), f - vec2(1.0,1.0) ), u.x), u.y);
+                    }
+
+                    // Gradient Noise
+                    // From IQ (https://www.shadertoy.com/view/Xsl3Dl)
+                    float gnoise (in vec3 p) {
+                        vec3 i = floor( p );
+                        vec3 f = fract( p );
+                        vec3 u = f*f*(3.0-2.0*f);
+
+                        return mix( mix( mix( dot( random3( i + vec3(0.0,0.0,0.0) ), f - vec3(0.0,0.0,0.0) ), 
+                                              dot( random3( i + vec3(1.0,0.0,0.0) ), f - vec3(1.0,0.0,0.0) ), u.x),
+                                         mix( dot( random3( i + vec3(0.0,1.0,0.0) ), f - vec3(0.0,1.0,0.0) ), 
+                                              dot( random3( i + vec3(1.0,1.0,0.0) ), f - vec3(1.0,1.0,0.0) ), u.x), u.y),
+                                    mix( mix( dot( random3( i + vec3(0.0,0.0,1.0) ), f - vec3(0.0,0.0,1.0) ), 
+                                              dot( random3( i + vec3(1.0,0.0,1.0) ), f - vec3(1.0,0.0,1.0) ), u.x),
+                                         mix( dot( random3( i + vec3(0.0,1.0,1.0) ), f - vec3(0.0,1.0,1.0) ), 
+                                              dot( random3( i + vec3(1.0,1.0,1.0) ), f - vec3(1.0,1.0,1.0) ), u.x), u.y), u.z );
+                    }
+
+                    vec3 mod289(vec3 x) { 
+                        return x - floor(x * (1.0 / 289.0)) * 289.0; 
+                    }
+                    vec2 mod289(vec2 x) { 
+                        return x - floor(x * (1.0 / 289.0)) * 289.0; 
+                    }
+                    vec3 permute(vec3 x) { 
+                        return mod289(((x*34.0)+1.0)*x); 
+                    }
+
+                    // Simplex Noise
+                    // from Ian McEwan, Ashima Arts
+                    float snoise(vec2 v) {
+
+                        // Precompute values for skewed triangular grid
+                        const vec4 C = vec4(0.211324865405187,
+                                            // (3.0-sqrt(3.0))/6.0
+                                            0.366025403784439,  
+                                            // 0.5*(sqrt(3.0)-1.0)
+                                            -0.577350269189626,  
+                                            // -1.0 + 2.0 * C.x
+                                            0.024390243902439); 
+                                            // 1.0 / 41.0
+
+                        // First corner (x0)
+                        vec2 i  = floor(v + dot(v, C.yy));
+                        vec2 x0 = v - i + dot(i, C.xx);
+
+                        // Other two corners (x1, x2)
+                        vec2 i1 = vec2(0.0);
+                        i1 = (x0.x > x0.y)? vec2(1.0, 0.0):vec2(0.0, 1.0);
+                        vec2 x1 = x0.xy + C.xx - i1;
+                        vec2 x2 = x0.xy + C.zz;
+
+                        // Do some permutations to avoid
+                        // truncation effects in permutation
+                        i = mod289(i);
+                        vec3 p = permute(
+                                permute( i.y + vec3(0.0, i1.y, 1.0))
+                                    + i.x + vec3(0.0, i1.x, 1.0 ));
+
+                        vec3 m = max(0.5 - vec3(
+                                            dot(x0,x0), 
+                                            dot(x1,x1), 
+                                            dot(x2,x2)
+                                            ), 0.0);
+
+                        m = m*m ;
+                        m = m*m ;
+
+                        // Gradients: 
+                        //  41 pts uniformly over a line, mapped onto a diamond
+                        //  The ring size 17*17 = 289 is close to a multiple 
+                        //      of 41 (41*7 = 287)
+
+                        vec3 x = 2.0 * fract(p * C.www) - 1.0;
+                        vec3 h = abs(x) - 0.5;
+                        vec3 ox = floor(x + 0.5);
+                        vec3 a0 = x - ox;
+
+                        // Normalise gradients implicitly by scaling m
+                        // Approximation of: m *= inversesqrt(a0*a0 + h*h);
+                        m *= 1.79284291400159 - 0.85373472095314 * (a0*a0+h*h);
+
+                        // Compute final noise value at P
+                        vec3 g = vec3(0.0);
+                        g.x  = a0.x  * x0.x  + h.x  * x0.y;
+                        g.yz = a0.yz * vec2(x1.x,x2.x) + h.yz * vec2(x1.y,x2.y);
+                        return 130.0 * dot(m, g);
+                    }
+
+                    // Simplex Noise
+                    // from Ian McEwan, Ashima Arts
+                    const float F3 =  0.3333333;
+                    const float G3 =  0.1666667;
+                    float snoise (vec3 p) {
+                        vec3 s = floor(p + dot(p, vec3(F3)));
+                        vec3 x = p - s + dot(s, vec3(G3));
+                        vec3 e = step(vec3(0.0), x - x.yzx);
+                        vec3 i1 = e*(1.0 - e.zxy);
+                        vec3 i2 = 1.0 - e.zxy*(1.0 - e);
+                        vec3 x1 = x - i1 + G3;
+                        vec3 x2 = x - i2 + 2.0*G3;
+                        vec3 x3 = x - 1.0 + 3.0*G3;
+                        vec4 w, d;
+                        w.x = dot(x, x);
+                        w.y = dot(x1, x1);
+                        w.z = dot(x2, x2);
+                        w.w = dot(x3, x3);
+                        w = max(0.6 - w, 0.0);
+                        d.x = dot(random3(s), x);
+                        d.y = dot(random3(s + i1), x1);
+                        d.z = dot(random3(s + i2), x2);
+                        d.w = dot(random3(s + 1.0), x3);
+                        w *= w;
+                        w *= w;
+                        d *= w;
+                        return dot(d, vec4(52.0));
+                    }
+
+    generative-random:
+        doc:
+            author: 
+                name: Patricio Gonzalez Vivo
+                twitter: patriciogv
+            version: 0.0.1
+            tangram-version: 0.0.7
+            licence: MIT
+            description: |
+                Set of functions about random.
+                For more information on this theme read [this chapter of The Book of Shaders about Random](http://thebookofshaders.com/10/).
+        test:
+            random_float: { blocks: { color: "    color.rgb += random(v_texcoord.x*2.);" } }
+            random_vec2: { blocks: { color: "    color.rgb += random(v_texcoord.xy*2.);" } }
+            random_vec3: { blocks: { color: "    color.rgb += random(vec3(v_texcoord.xy*2.,u_time));" } }
+            random2_vec2: { blocks: { color: "    color.rg += random2(v_texcoord.xy*2.);" } }
+            random3_vec2: { blocks: { color: "    color.rgb += random3(v_texcoord.xy*2.);" } }
+            random3_vec3: { blocks: { color: "    color.rgb += random3(vec3(v_texcoord.xy*2.,u_time));" } }
+            random_float_t: { defines: { RANDOM_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += random(v_texcoord.x*2.);" } }
+            random_vec2_t: { defines: { RANDOM_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += random(v_texcoord.xy*2.);" } }
+            random_vec3_t: { defines: { RANDOM_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += random(vec3(v_texcoord.xy*2.,u_time));" } }
+            random2_vec2_t: { defines: { RANDOM_TEXSAMPLE: 1 }, blocks: { color: "    color.rg += random2(v_texcoord.xy*2.);" } }
+            random3_vec2_t: { defines: { RANDOM_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += random3(v_texcoord.xy*2.);" } }
+            random3_vec3_t: { defines: { RANDOM_TEXSAMPLE: 1 }, blocks: { color: "    color.rgb += random3(vec3(v_texcoord.xy*2.,u_time));" } }
+            
+        shaders:
+            uniforms:
+                u_random: https://tangrams.github.io/blocks/generative/imgs/tex16.png
+            blocks:
+                global: |
+                    vec3 random3 (vec2 p) {
+                        #ifdef RANDOM_TEXSAMPLE
+                        return texture2D(u_random,fract(p*2.),-100.).rgb;
+                        #else
+                        return fract(sin(vec3( dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)), dot(p,vec2(419.2,371.9)) ))*43758.5453); 
+                        #endif
+                    }
+                    vec3 random3 (vec3 p) {
+                        #ifdef RANDOM_TEXSAMPLE
+                        vec2 uv = fract(p.xy+vec2(37.0,17.0)*p.z);
+                        return texture2D(u_random, fract(uv*2.), -100.0).rgb;
+                        #else
+                        float j = 4096.0*sin(dot(p,vec3(17.0, 59.4, 15.0)));
+                        vec3 r;
+                        r.z = fract(512.0*j);
+                        j *= .125;
+                        r.x = fract(512.0*j);
+                        j *= .125;
+                        r.y = fract(512.0*j);
+                        return r-0.5;
+                        #endif
+                    }
+                    vec2 random2 (vec2 p) { 
+                        #ifdef RANDOM_TEXSAMPLE
+                        return random3(p).rg;
+                        #else
+                        return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453); 
+                        #endif
+                    }
+                    float random (float x) { 
+                        return fract(sin(x)*43758.5453);
+                    }
+                    float random (vec2 p) { 
+                        #ifdef RANDOM_TEXSAMPLE
+                        return random3(p).r;
+                        #else
+                        return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); 
+                        #endif
+                    }
+                    float random (vec3 p) { 
+                        #ifdef RANDOM_TEXSAMPLE
+                        return random3(p).r;
+                        #else
+                        return fract(sin(dot(p.xyz, vec3(70.9898,78.233,32.4355)))* 43758.5453123); 
+                        #endif
+                    }
+
+    space-tile:
+        shaders:
+            blocks:
+                global: |
+                    // Variant to be add to both vertex and fragments shaders
+                    #ifndef v_pos
+                    varying vec3 v_pos;
+                    #endif
+                    //
+                    // Get the coordinates in tile space
+                    // ================================
+                    vec2 getTileCoords() {
+                        return fract(v_pos.xy);
+                    }
+                position: |
+                    // Normalize the attribute position of a vertex
+                    v_pos = modelPosition().xyz;
